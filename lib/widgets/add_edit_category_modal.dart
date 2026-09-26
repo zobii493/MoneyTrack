@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/category.dart';
@@ -66,9 +67,9 @@ class _AddEditCategoryModalState extends State<AddEditCategoryModal> {
       child: Container(
         decoration: BoxDecoration(
           color: isDark ? AppColors.cardDark : AppColors.cardLight,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
         ),
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24.r),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -79,79 +80,98 @@ class _AddEditCategoryModalState extends State<AddEditCategoryModal> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      widget.existingCategory == null ? 'New Category' : 'Edit Category',
-                      style: Theme.of(context).textTheme.headlineMedium,
+                    Expanded(
+                      child: Text(
+                        widget.existingCategory == null ? 'New Category' : 'Edit Category',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: Icon(Icons.close, size: 20.sp),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 16.h),
                 Row(
                   children: [
                     Expanded(
                       child: ChoiceChip(
-                        label: const Text('Expense'),
+                        label: Center(child: Text('Expense', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold))),
                         selected: _type == CategoryType.expense,
+                        selectedColor: AppColors.expense,
+                        labelStyle: TextStyle(color: _type == CategoryType.expense ? Colors.white : null),
                         onSelected: (val) => setState(() => _type = CategoryType.expense),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12.w),
                     Expanded(
                       child: ChoiceChip(
-                        label: const Text('Income'),
+                        label: Center(child: Text('Income', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold))),
                         selected: _type == CategoryType.income,
+                        selectedColor: AppColors.income,
+                        labelStyle: TextStyle(color: _type == CategoryType.income ? Colors.white : null),
                         onSelected: (val) => setState(() => _type = CategoryType.income),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Category Name',
-                    prefixIcon: Icon(Icons.label),
+                    prefixIcon: Icon(Icons.label_outlined),
                   ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) return 'Enter name';
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
-                Text('Select Icon', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 10),
+                SizedBox(height: 16.h),
+                Text('Select Icon', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 14.sp)),
+                SizedBox(height: 10.h),
                 Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
+                  spacing: 10.w,
+                  runSpacing: 10.h,
                   children: _availableIcons.map((icon) {
                     final isSelected = _selectedIcon.codePoint == icon.codePoint;
                     return InkWell(
                       onTap: () => setState(() => _selectedIcon = icon),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(12.r),
                       child: Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.all(10.r),
                         decoration: BoxDecoration(
                           color: isSelected ? AppColors.primary : Colors.black.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: Icon(
                           icon,
                           color: isSelected ? Colors.white : AppColors.primary,
+                          size: 20.sp,
                         ),
                       ),
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _save,
-                    child: Text(widget.existingCategory == null ? 'Save Category' : 'Update Category'),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                    ),
+                    child: Text(
+                      widget.existingCategory == null ? 'Save Category' : 'Update Category',
+                      style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],

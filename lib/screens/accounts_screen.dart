@@ -41,7 +41,7 @@ class AccountsScreen extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'Manage banks, savings & cash',
+                        'Manage banks, savings & cash balances',
                         style: Theme.of(context).textTheme.bodyMedium,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -64,7 +64,7 @@ class AccountsScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             if (accounts.isEmpty)
               EmptyState(
                 icon: Icons.account_balance_outlined,
@@ -81,112 +81,103 @@ class AccountsScreen extends StatelessWidget {
                 },
               )
             else
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final isMobile = constraints.maxWidth < 700;
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: isMobile ? 1 : 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: isMobile ? 2.1 : 2.0,
-                    ),
-                    itemCount: accounts.length,
-                    itemBuilder: (context, index) {
-                      final acc = accounts[index];
-                      final isNegative = acc.balance < 0;
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: accounts.length,
+                itemBuilder: (context, index) {
+                  final acc = accounts[index];
+                  final isNegative = acc.balance < 0;
+                  final accColor = Color(acc.colorValue);
 
-                      return CustomCard(
-                        padding: const EdgeInsets.all(18),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Color(acc.colorValue).withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    IconData(acc.iconCode, fontFamily: 'MaterialIcons'),
-                                    color: Color(acc.colorValue),
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        acc.name,
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      if (acc.accountNumberMasked != null)
-                                        Text(
-                                          acc.accountNumberMasked!,
-                                          style: Theme.of(context).textTheme.bodyMedium,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                PopupMenuButton<String>(
-                                  onSelected: (val) {
-                                    if (val == 'edit') {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (_) => AddEditAccountModal(existingAccount: acc),
-                                      );
-                                    } else if (val == 'delete') {
-                                      financeProvider.deleteAccount(acc.id);
-                                      ToastNotification.show(context, message: 'Account deleted', type: ToastType.error);
-                                    }
-                                  },
-                                  itemBuilder: (_) => const [
-                                    PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                    PopupMenuItem(value: 'delete', child: Text('Delete')),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    CurrencyUtils.format(acc.balance, currencyCode: currency, showSign: isNegative),
-                                    style: TextStyle(
-                                      fontSize: 24,
+                  return CustomCard(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: accColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: accColor.withOpacity(0.2)),
+                          ),
+                          child: Icon(
+                            IconData(acc.iconCode, fontFamily: 'MaterialIcons'),
+                            color: accColor,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                acc.name,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      color: isNegative ? AppColors.expense : null,
+                                      fontSize: 14,
                                     ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                acc.accountNumberMasked ?? acc.type.name.toUpperCase(),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      fontSize: 12,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              CurrencyUtils.format(acc.balance, currencyCode: currency, showSign: isNegative),
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: isNegative ? AppColors.expense : AppColors.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Updated ${DateUtilsHelper.formatShortDate(acc.updatedAt)}',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontSize: 11,
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Updated ${DateUtilsHelper.formatShortDate(acc.updatedAt)}',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 11),
-                                ),
-                              ],
                             ),
                           ],
                         ),
-                      );
-                    },
+                        PopupMenuButton<String>(
+                          iconSize: 20,
+                          onSelected: (val) {
+                            if (val == 'edit') {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) => AddEditAccountModal(existingAccount: acc),
+                              );
+                            } else if (val == 'delete') {
+                              financeProvider.deleteAccount(acc.id);
+                              ToastNotification.show(context, message: 'Account deleted', type: ToastType.error);
+                            }
+                          },
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(value: 'edit', child: Text('Edit')),
+                            PopupMenuItem(value: 'delete', child: Text('Delete')),
+                          ],
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),

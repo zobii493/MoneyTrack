@@ -5,14 +5,17 @@ import 'providers/auth_provider.dart';
 import 'providers/finance_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/theme_provider.dart';
+import 'screens/auth/email_verification_screen.dart';
 import 'screens/auth/welcome_screen.dart';
 import 'screens/main_layout.dart';
 import 'screens/onboarding/onboarding_screen.dart';
+import 'services/firebase_service.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FirebaseService.init();
   runApp(const MoneyTrackApp());
 }
 
@@ -53,6 +56,15 @@ class MoneyTrackApp extends StatelessWidget {
 
                     if (!authProvider.isLoggedIn) {
                       return const WelcomeScreen();
+                    }
+
+                    // Check real Firebase email verification status
+                    final currentUser = FirebaseService.currentUser;
+                    if (FirebaseService.isInitialized &&
+                        currentUser != null &&
+                        !currentUser.emailVerified &&
+                        currentUser.providerData.any((p) => p.providerId == 'password')) {
+                      return const EmailVerificationScreen();
                     }
 
                     if (!authProvider.isOnboarded) {

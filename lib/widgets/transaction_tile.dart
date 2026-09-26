@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../providers/auth_provider.dart';
@@ -49,21 +48,21 @@ class TransactionTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
               Container(
-                width: 42.w,
-                height: 42.h,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: catColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(iconData, color: catColor, size: 20.sp),
+                child: Icon(iconData, color: catColor, size: 18),
               ),
-              SizedBox(width: 10.w),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,22 +73,22 @@ class TransactionTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
-                            fontSize: 14.sp,
+                            fontSize: 13,
                           ),
                     ),
-                    SizedBox(height: 2.h),
+                    const SizedBox(height: 2),
                     Text(
                       '${category?.name ?? 'General'} • ${DateUtilsHelper.formatTransactionDate(transaction.date)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 11.sp,
+                            fontSize: 11,
                           ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(width: 8.w),
+              const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -98,14 +97,14 @@ class TransactionTile extends StatelessWidget {
                     style: TextStyle(
                       color: amountColor,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14.sp,
+                      fontSize: 13,
                     ),
                   ),
-                  SizedBox(height: 2.h),
+                  const SizedBox(height: 2),
                   Text(
                     transaction.paymentMethod,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 11.sp,
+                          fontSize: 11,
                         ),
                   ),
                 ],

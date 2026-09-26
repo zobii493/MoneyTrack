@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../providers/auth_provider.dart';
@@ -20,316 +19,280 @@ class BalanceCard extends StatelessWidget {
     final totalBalance = financeProvider.totalBalance;
     final incomeMonth = financeProvider.totalIncomeMonth;
     final expenseMonth = financeProvider.totalExpenseMonth;
-    final accountCount = financeProvider.accounts.length;
+
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF059669).withOpacity(0.2),
-            blurRadius: 24.r,
-            offset: Offset(0, 10.h),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24.r),
-        child: Stack(
-          children: [
-            // Background Base Gradient
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF0F172A), // Deep Slate Navy
-                    Color(0xFF064E3B), // Deep Emerald
-                    Color(0xFF047857), // Bright Emerald Glow
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: EdgeInsets.all(isLandscape ? 14 : 20),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF0F172A),
+                Color(0xFF064E3B),
+                Color(0xFF059669),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-
-            // Decorative Ambient Lighting Spheres
-            Positioned(
-              top: -30.h,
-              right: -30.w,
-              child: Container(
-                width: 140.w,
-                height: 140.h,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.08),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -40.h,
-              left: -20.w,
-              child: Container(
-                width: 160.w,
-                height: 160.h,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primaryLight.withOpacity(0.12),
-                ),
-              ),
-            ),
-
-            // Main Content Layer
-            Padding(
-              padding: EdgeInsets.all(22.r),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Top Header Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Top Header Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.all(8.r),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(10.r),
-                            ),
-                            child: Icon(
-                              Icons.account_balance_wallet_rounded,
-                              color: Colors.white,
-                              size: 18.sp,
-                            ),
-                          ),
-                          SizedBox(width: 10.w),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Total Net Worth',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              Text(
-                                '$accountCount Active Accounts',
-                                style: TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 10.sp,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      // Growth Badge
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.25),
-                          borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(color: Colors.greenAccent.withOpacity(0.4)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.trending_up_rounded, color: Colors.greenAccent, size: 14.sp),
-                            SizedBox(width: 4.w),
-                            Text(
-                              '+8.4%',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16.h),
-
-                  // Prominent Balance Value
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      CurrencyUtils.format(totalBalance, currencyCode: currency),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 34.sp,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-
-                  // Mini Monthly Flow Stats (Income vs Expense)
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(14.r),
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
-                    ),
+                  Expanded(
                     child: Row(
                       children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(4.r),
-                                decoration: BoxDecoration(
-                                  color: AppColors.income.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(Icons.arrow_downward_rounded, color: Colors.greenAccent, size: 12.sp),
-                              ),
-                              SizedBox(width: 6.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Monthly In', style: TextStyle(color: Colors.white54, fontSize: 10.sp)),
-                                    FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        '+${CurrencyUtils.formatCompact(incomeMonth, currencyCode: currency)}',
-                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.sp),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.account_balance_wallet_rounded,
+                            color: Colors.white,
+                            size: 16,
                           ),
                         ),
-                        Container(height: 20.h, width: 1, color: Colors.white24),
-                        SizedBox(width: 12.w),
+                        const SizedBox(width: 8),
                         Expanded(
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(4.r),
-                                decoration: BoxDecoration(
-                                  color: AppColors.expense.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(Icons.arrow_upward_rounded, color: Colors.redAccent, size: 12.sp),
-                              ),
-                              SizedBox(width: 6.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Monthly Out', style: TextStyle(color: Colors.white54, fontSize: 10.sp)),
-                                    FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        '-${CurrencyUtils.formatCompact(expenseMonth, currencyCode: currency)}',
-                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.sp),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            'TOTAL BALANCE',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.0,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 20.h),
-
-                  // Action Buttons (Add Income / Add Expense)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (_) => const AddEditTransactionModal(
-                                initialType: TransactionType.income,
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF0F172A),
-                            elevation: 0,
-                            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                          ),
-                          child: FittedBox(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_circle, color: AppColors.primary, size: 16.sp),
-                                SizedBox(width: 6.w),
-                                Text(
-                                  'Add Income',
-                                  style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.income.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.greenAccent.withOpacity(0.5)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.trending_up_rounded, color: Colors.greenAccent, size: 12),
+                        SizedBox(width: 4),
+                        Text(
+                          '+8.4%',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (_) => const AddEditTransactionModal(
-                                initialType: TransactionType.expense,
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.15),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              side: BorderSide(color: Colors.white.withOpacity(0.2)),
-                            ),
-                          ),
-                          child: FittedBox(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.remove_circle, color: Colors.white, size: 16.sp),
-                                SizedBox(width: 6.w),
-                                Text(
-                                  'Add Expense',
-                                  style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+              SizedBox(height: isLandscape ? 8 : 14),
+
+              // Large Prominent Balance Value
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  CurrencyUtils.format(totalBalance, currencyCode: currency),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+              SizedBox(height: isLandscape ? 8 : 14),
+
+              // Cashflow Mini Bar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.12)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.income.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(Icons.arrow_downward_rounded, color: Colors.greenAccent, size: 12),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Income', style: TextStyle(color: Colors.white60, fontSize: 10)),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    '+${CurrencyUtils.format(incomeMonth, currencyCode: currency)}',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(height: 20, width: 1, color: Colors.white24),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.expense.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(Icons.arrow_upward_rounded, color: Colors.redAccent, size: 12),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Expenses', style: TextStyle(color: Colors.white60, fontSize: 10)),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    '-${CurrencyUtils.format(expenseMonth, currencyCode: currency)}',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: isLandscape ? 10 : 16),
+
+              // Action Buttons Row
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => const AddEditTransactionModal(
+                            initialType: TransactionType.income,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF0F172A),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const FittedBox(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_circle_rounded, color: AppColors.primary, size: 16),
+                            SizedBox(width: 4),
+                            Text(
+                              'Add Income',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => const AddEditTransactionModal(
+                            initialType: TransactionType.expense,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.18),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.white.withOpacity(0.25)),
+                        ),
+                      ),
+                      child: const FittedBox(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.remove_circle_rounded, color: Colors.white, size: 16),
+                            SizedBox(width: 4),
+                            Text(
+                              'Add Expense',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
