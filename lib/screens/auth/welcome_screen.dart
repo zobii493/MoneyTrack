@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/auth/google_sign_in_button.dart';
+import '../../widgets/toast_notification.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
 
@@ -10,44 +14,43 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: 40.h),
+                SizedBox(height: 24.h),
 
-                // App Logo
+                // Branding App Logo
                 Container(
-                  width: 90.w,
-                  height: 90.h,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primary, AppColors.primaryLight],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(26.r),
+                    borderRadius: BorderRadius.circular(24.r),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.35),
-                        blurRadius: 24.r,
-                        offset: Offset(0, 10.h),
+                        color: AppColors.primary.withOpacity(0.25),
+                        blurRadius: 20.r,
+                        offset: Offset(0, 8.h),
                       ),
                     ],
                   ),
-                  child: Icon(
-                    Icons.show_chart_rounded,
-                    color: Colors.white,
-                    size: 48.sp,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24.r),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 90.w,
+                      height: 90.h,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-                SizedBox(height: 28.h),
+                SizedBox(height: 24.h),
 
-                // Branding Title & Subtitle
                 Text(
                   'MoneyTrack',
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
@@ -58,19 +61,19 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 8.h),
                 Text(
-                  'Track Your Money. Control Your Spending.',
+                  'Take Control of Your Money.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
-                    fontSize: 14.sp,
+                    fontSize: 16.sp,
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 12.h),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   child: Text(
-                    'Understand your spending habits, manage budgets, monitor financial goals, and build wealth from a single dashboard.',
+                    'Track spending, build better habits, and move closer to your financial goals with an intuitive dashboard.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 13.sp,
@@ -78,9 +81,9 @@ class WelcomeScreen extends StatelessWidget {
                         ),
                   ),
                 ),
-                SizedBox(height: 60.h),
+                SizedBox(height: 40.h),
 
-                // Feature Highlights Card
+                // Feature Highlights Cards
                 Container(
                   padding: EdgeInsets.all(20.r),
                   decoration: BoxDecoration(
@@ -92,17 +95,35 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      _featureRow(context, Icons.security_rounded, 'Bank-Grade Security', 'Your financial data is encrypted and isolated.'),
-                      SizedBox(height: 14.h),
-                      _featureRow(context, Icons.pie_chart_rounded, 'Intelligent Analytics', 'Interactive charts and automatic spending insights.'),
+                      _featureRow(
+                        context,
+                        Icons.shield_outlined,
+                        'Bank-Grade Security',
+                        'Encrypted cloud synchronization & private data safety.',
+                      ),
+                      SizedBox(height: 16.h),
+                      _featureRow(
+                        context,
+                        Icons.donut_large_rounded,
+                        'Smart Analytics',
+                        'Visual breakdown of income, expenses, and savings.',
+                      ),
+                      SizedBox(height: 16.h),
+                      _featureRow(
+                        context,
+                        Icons.track_changes_rounded,
+                        'Goal Tracking',
+                        'Set monthly budgets and track your savings milestones.',
+                      ),
                     ],
                   ),
                 ),
                 SizedBox(height: 40.h),
 
-                // Action Buttons
+                // Buttons Section
                 SizedBox(
                   width: double.infinity,
+                  height: 50.h,
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.push(
@@ -111,15 +132,39 @@ class WelcomeScreen extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
                     ),
-                    child: Text('Get Started Free', style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Get Started Free',
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(height: 12.h),
+
+                GoogleSignInButton(
+                  isLoading: authProvider.isLoading,
+                  onPressed: () async {
+                    final success = await authProvider.signInWithGoogle();
+                    if (!success && authProvider.errorMessage != null && context.mounted) {
+                      ToastNotification.show(
+                        context,
+                        message: authProvider.errorMessage!,
+                        type: ToastType.error,
+                      );
+                    }
+                  },
+                ),
+                SizedBox(height: 12.h),
+
                 SizedBox(
                   width: double.infinity,
+                  height: 50.h,
                   child: OutlinedButton(
                     onPressed: () {
                       Navigator.push(
@@ -128,12 +173,20 @@ class WelcomeScreen extends StatelessWidget {
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
                     ),
-                    child: Text('I Already Have an Account', style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'I Already Have an Account',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
+                SizedBox(height: 16.h),
               ],
             ),
           ),
@@ -151,15 +204,27 @@ class WelcomeScreen extends StatelessWidget {
             color: AppColors.primary.withOpacity(0.12),
             borderRadius: BorderRadius.circular(12.r),
           ),
-          child: Icon(icon, color: AppColors.primary, size: 20.sp),
+          child: Icon(icon, color: AppColors.primary, size: 22.sp),
         ),
-        SizedBox(width: 12.w),
+        SizedBox(width: 14.w),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.sp)),
-              Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 11.sp)),
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.sp,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 12.sp,
+                    ),
+              ),
             ],
           ),
         ),

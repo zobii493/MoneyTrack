@@ -34,20 +34,18 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   Future<void> _checkVerification() async {
     if (_isChecking) return;
-    setState(() => _isChecking = true);
+    if (mounted) setState(() => _isChecking = true);
 
-    final isVerified = await FirebaseService.checkEmailVerified();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isVerified = await authProvider.checkEmailVerification();
+
     if (!mounted) return;
+
+    setState(() => _isChecking = false);
 
     if (isVerified) {
       _timer?.cancel();
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.updateProfile();
-      if (mounted) {
-        ToastNotification.show(context, message: 'Email verified successfully!');
-      }
-    } else {
-      setState(() => _isChecking = false);
+      ToastNotification.show(context, message: 'Email verified successfully!');
     }
   }
 
@@ -69,17 +67,19 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final authProvider = Provider.of<AuthProvider>(context);
     final userEmail = authProvider.user?.email ?? FirebaseService.currentUser?.email ?? 'your email';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verify Email'),
+        title: const Text('Email Verification'),
+        centerTitle: true,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: AppColors.expense),
-            tooltip: 'Log Out',
+            tooltip: 'Sign Out',
             onPressed: () => authProvider.logout(),
           ),
         ],
@@ -91,6 +91,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
             children: [
               const Spacer(),
 
+              // Animated Mail Icon Container
               Container(
                 width: 90.w,
                 height: 90.h,
@@ -121,29 +122,44 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13.sp),
               ),
-              SizedBox(height: 6.h),
+              SizedBox(height: 8.h),
 
-              Text(
-                userEmail,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.cardDark : AppColors.cardLight,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                  ),
+                ),
+                child: Text(
+                  userEmail,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
               SizedBox(height: 16.h),
 
               Text(
-                'Please click the link in your inbox to verify your account and unlock MoneyTrack features.',
+                'Please click the link in your email inbox to verify your account and unlock all MoneyTrack features.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12.sp),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 12.sp,
+                      height: 1.4,
+                    ),
               ),
 
               const Spacer(),
 
+              // Check Status Button
               SizedBox(
                 width: double.infinity,
+                height: 50.h,
                 child: ElevatedButton.icon(
                   onPressed: _isChecking ? null : _checkVerification,
                   icon: _isChecking
@@ -152,32 +168,34 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                           height: 18.h,
                           child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
-                      : Icon(Icons.check_circle_outline, size: 20.sp),
-                  label: Text('I Have Verified My Email', style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold)),
+                      : Icon(Icons.check_circle_outline_rounded, size: 20.sp),
+                  label: Text(
+                    "I've Verified My Email",
+                    style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
+                  ),
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
                   ),
                 ),
               ),
               SizedBox(height: 12.h),
 
+              // Resend Email Button
               SizedBox(
                 width: double.infinity,
+                height: 50.h,
                 child: OutlinedButton.icon(
                   onPressed: !_canResend
                       ? null
                       : () async {
-                          try {
-                            await FirebaseService.sendEmailVerification();
+                          final navigatorContext = context;
+                          final success = await authProvider.sendEmailVerification();
+                          if (!mounted) return;
+                          if (success) {
                             _startResendTimer();
-                            if (mounted) {
-                              ToastNotification.show(context, message: 'Verification email resent!');
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              ToastNotification.show(context, message: 'Resend error: $e', type: ToastType.error);
-                            }
+                            ToastNotification.show(navigatorContext, message: 'Verification email resent!');
+                          } else if (authProvider.errorMessage != null) {
+                            ToastNotification.show(navigatorContext, message: authProvider.errorMessage!, type: ToastType.error);
                           }
                         },
                   icon: Icon(Icons.send_rounded, size: 18.sp),
@@ -186,7 +204,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
                   ),
                   style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
                   ),
                 ),
@@ -196,7 +213,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
               TextButton(
                 onPressed: () => authProvider.logout(),
-                child: Text('Use Different Email / Log Out', style: TextStyle(fontSize: 13.sp, color: AppColors.expense)),
+                child: Text(
+                  'Use Different Email / Sign Out',
+                  style: TextStyle(fontSize: 13.sp, color: AppColors.expense, fontWeight: FontWeight.w600),
+                ),
               ),
 
               SizedBox(height: 10.h),

@@ -178,38 +178,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
 
             // Danger Zone
-            Text('Danger Zone', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.expense)),
+            Text('Account Actions & Danger Zone', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.expense)),
             const SizedBox(height: 12),
             CustomCard(
               backgroundColor: AppColors.expense.withOpacity(0.05),
               border: Border.all(color: AppColors.expense.withOpacity(0.3)),
-              child: ListTile(
-                leading: const Icon(Icons.delete_forever, color: AppColors.expense),
-                title: const Text('Delete Account & Clear Data', style: TextStyle(color: AppColors.expense, fontWeight: FontWeight.bold)),
-                subtitle: const Text('Permanently remove all local transaction logs and settings'),
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (dialogCtx) => AlertDialog(
-                      title: const Text('Delete Account & Reset?'),
-                      content: const Text('This will clear all your saved financial records permanently.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogCtx),
-                          child: const Text('Cancel'),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.logout_rounded, color: AppColors.expense),
+                    title: const Text('Sign Out', style: TextStyle(color: AppColors.expense, fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Sign out of your MoneyTrack account on this device'),
+                    onTap: () {
+                      authProvider.logout();
+                      ToastNotification.show(context, message: 'Signed out');
+                    },
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.delete_forever, color: AppColors.expense),
+                    title: const Text('Reset All Financial Data', style: TextStyle(color: AppColors.expense, fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Permanently reset all local transactions, accounts, and budgets'),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (dialogCtx) => AlertDialog(
+                          title: const Text('Reset All Data?'),
+                          content: const Text('This will reset all your saved financial records back to defaults.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogCtx),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                Navigator.pop(dialogCtx);
+                                await financeProvider.resetToSampleData();
+                                if (context.mounted) {
+                                  ToastNotification.show(context, message: 'All financial data reset!');
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.expense),
+                              child: const Text('Reset All Data'),
+                            ),
+                          ],
                         ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(dialogCtx);
-                            authProvider.logout();
-                          },
-                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.expense),
-                          child: const Text('Delete All Data'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ],

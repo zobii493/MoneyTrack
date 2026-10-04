@@ -3,6 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/auth/auth_header.dart';
+import '../../widgets/auth/auth_text_field.dart';
+import '../../widgets/auth/google_sign_in_button.dart';
 import '../../widgets/toast_notification.dart';
 import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
@@ -18,8 +21,17 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
   bool _rememberMe = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Provider.of<AuthProvider>(context, listen: false).clearError();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -28,127 +40,112 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+      rememberMe: _rememberMe,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      ToastNotification.show(context, message: 'Welcome back!');
+      if (Navigator.canPop(context)) {
+        Navigator.popUntil(context, (route) => route.isFirst);
+      }
+    } else if (authProvider.errorMessage != null) {
+      ToastNotification.show(
+        context,
+        message: authProvider.errorMessage!,
+        type: ToastType.error,
+      );
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.signInWithGoogle();
+
+    if (!mounted) return;
+
+    if (success) {
+      ToastNotification.show(context, message: 'Signed in with Google');
+      if (Navigator.canPop(context)) {
+        Navigator.popUntil(context, (route) => route.isFirst);
+      }
+    } else if (authProvider.errorMessage != null) {
+      ToastNotification.show(
+        context,
+        message: authProvider.errorMessage!,
+        type: ToastType.error,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(elevation: 0),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Welcome Back',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontSize: 26.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  const AuthHeader(
+                    title: 'Welcome Back',
+                    subtitle: 'Sign in to access your financial dashboard and track your spending.',
                   ),
-                  SizedBox(height: 6.h),
-                  Text(
-                    'Sign in to your MoneyTrack account',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 13.sp,
-                        ),
-                  ),
-                  SizedBox(height: 28.h),
+                  SizedBox(height: 32.h),
 
-                  // Google Sign-In Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: authProvider.isLoading
-                          ? null
-                          : () async {
-                              try {
-                                final success = await authProvider.signInWithGoogle();
-                                if (success && context.mounted) {
-                                  ToastNotification.show(context, message: 'Signed in with Google');
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ToastNotification.show(
-                                    context,
-                                    message: 'Google Sign-In notice: $e',
-                                    type: ToastType.warning,
-                                  );
-                                }
-                              }
-                            },
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 13.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.g_mobiledata_rounded, size: 28.sp, color: Colors.red),
-                          SizedBox(width: 8.w),
-                          Text('Continue with Google', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-
-                  Row(
-                    children: [
-                      const Expanded(child: Divider()),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 14.w),
-                        child: Text(
-                          'OR EMAIL',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ),
-                      const Expanded(child: Divider()),
-                    ],
-                  ),
-                  SizedBox(height: 20.h),
-
-                  TextFormField(
+                  // Email Field
+                  AuthTextField(
                     controller: _emailController,
+                    label: 'Email Address',
+                    hint: 'name@example.com',
+                    prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email Address',
-                      prefixIcon: Icon(Icons.email_outlined),
-                      hintText: 'your.name@example.com',
-                    ),
+                    enabled: !authProvider.isLoading,
                     validator: (val) {
-                      if (val == null || val.trim().isEmpty) return 'Please enter email address';
-                      if (!val.contains('@')) return 'Enter a valid email address';
+                      if (val == null || val.trim().isEmpty) return 'Please enter your email address';
+                      if (!val.contains('@') || !val.contains('.')) return 'Please enter a valid email address';
                       return null;
                     },
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 20.h),
 
-                  TextFormField(
+                  // Password Field
+                  AuthTextField(
                     controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, size: 20.sp),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                      ),
-                    ),
+                    label: 'Password',
+                    hint: '••••••••',
+                    prefixIcon: Icons.lock_outline_rounded,
+                    isPassword: true,
+                    textInputAction: TextInputAction.done,
+                    enabled: !authProvider.isLoading,
+                    onFieldSubmitted: (_) => _handleLogin(),
                     validator: (val) {
-                      if (val == null || val.isEmpty) return 'Please enter password';
+                      if (val == null || val.isEmpty) return 'Please enter your password';
                       return null;
                     },
                   ),
                   SizedBox(height: 12.h),
 
+                  // Remember Me & Forgot Password Row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -160,89 +157,191 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Checkbox(
                               value: _rememberMe,
                               activeColor: AppColors.primary,
-                              onChanged: (val) => setState(() => _rememberMe = val ?? true),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4.r),
+                              ),
+                              onChanged: authProvider.isLoading
+                                  ? null
+                                  : (val) {
+                                      setState(() {
+                                        _rememberMe = val ?? true;
+                                      });
+                                    },
                             ),
                           ),
                           SizedBox(width: 8.w),
-                          Text('Remember me', style: TextStyle(fontSize: 13.sp)),
+                          Text(
+                            'Remember me',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                            ),
+                          ),
                         ],
                       ),
                       TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-                          );
-                        },
+                        onPressed: authProvider.isLoading
+                            ? null
+                            : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const ForgotPasswordScreen(),
+                                  ),
+                                );
+                              },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                         child: Text(
                           'Forgot Password?',
-                          style: TextStyle(fontSize: 13.sp, color: AppColors.primary, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 24.h),
 
+                  // Inline Error Card
+                  if (authProvider.errorMessage != null) ...[
+                    SizedBox(height: 16.h),
+                    Container(
+                      padding: EdgeInsets.all(12.r),
+                      decoration: BoxDecoration(
+                        color: AppColors.expense.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: AppColors.expense.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline_rounded, color: AppColors.expense, size: 20.sp),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Text(
+                              authProvider.errorMessage!,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColors.expense,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  SizedBox(height: 28.h),
+
+                  // Sign In Button
                   SizedBox(
                     width: double.infinity,
+                    height: 50.h,
                     child: ElevatedButton(
-                      onPressed: authProvider.isLoading
-                          ? null
-                          : () async {
-                              if (_formKey.currentState!.validate()) {
-                                try {
-                                  await authProvider.login(
-                                    _emailController.text.trim(),
-                                    _passwordController.text,
-                                    rememberMe: _rememberMe,
-                                  );
-                                  if (context.mounted) {
-                                    ToastNotification.show(context, message: 'Logged in successfully');
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    ToastNotification.show(
-                                      context,
-                                      message: 'Authentication failed: $e',
-                                      type: ToastType.error,
-                                    );
-                                  }
-                                }
-                              }
-                            },
+                      onPressed: authProvider.isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
                       ),
                       child: authProvider.isLoading
                           ? SizedBox(
                               width: 20.w,
                               height: 20.h,
-                              child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
                             )
-                          : Text('Sign In', style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold)),
+                          : Text(
+                              'Sign In',
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
+
                   SizedBox(height: 24.h),
 
+                  // Divider OR
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text("Don't have an account? ", style: TextStyle(fontSize: 13.sp)),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const SignupScreen()),
-                          );
-                        },
+                      Expanded(
+                        child: Divider(
+                          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
                         child: Text(
-                          'Sign Up',
-                          style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13.sp),
+                          'OR',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: isDark ? AppColors.borderDark : AppColors.borderLight,
                         ),
                       ),
                     ],
                   ),
+
+                  SizedBox(height: 24.h),
+
+                  // Google Sign In
+                  GoogleSignInButton(
+                    isLoading: authProvider.isLoading,
+                    onPressed: _handleGoogleSignIn,
+                  ),
+
+                  SizedBox(height: 32.h),
+
+                  // Sign Up Link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don't have an account? ",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: authProvider.isLoading
+                            ? null
+                            : () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SignupScreen(),
+                                  ),
+                                );
+                              },
+                        child: Text(
+                          'Sign Up',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20.h),
                 ],
               ),
             ),

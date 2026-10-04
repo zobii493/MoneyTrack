@@ -22,11 +22,26 @@ class FirebaseService {
       debugPrint('Firebase initialized successfully.');
     } catch (e) {
       _isFirebaseInitialized = false;
-      debugPrint('Firebase initialization notice: $e (Falling back to local storage).');
+      debugPrint('Firebase initialization notice: $e (Falling back to local auth/storage).');
     }
   }
 
   // --- Auth Operations ---
+
+  static User? get currentUser {
+    if (!_isFirebaseInitialized) return null;
+    return FirebaseAuth.instance.currentUser;
+  }
+
+  static String? get currentUserId {
+    if (!_isFirebaseInitialized) return null;
+    return FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  static Stream<User?> get authStateChanges {
+    if (!_isFirebaseInitialized) return const Stream.empty();
+    return FirebaseAuth.instance.authStateChanges();
+  }
 
   static Future<UserCredential?> signUpWithEmail(String email, String password) async {
     if (!_isFirebaseInitialized) return null;
@@ -35,7 +50,6 @@ class FirebaseService {
       password: password,
     );
 
-    // Automatically send real email verification
     try {
       await credential.user?.sendEmailVerification();
       debugPrint('Verification email sent to $email');
@@ -54,7 +68,6 @@ class FirebaseService {
     );
   }
 
-  // Real Google Sign In Integration
   static Future<UserCredential?> signInWithGoogle() async {
     if (!_isFirebaseInitialized) {
       throw Exception('Firebase is not initialized.');
@@ -67,7 +80,7 @@ class FirebaseService {
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
-        // User canceled the sign-in flow
+        // User canceled flow
         return null;
       }
 
@@ -95,7 +108,7 @@ class FirebaseService {
   }
 
   static Future<bool> checkEmailVerified() async {
-    if (!_isFirebaseInitialized) return true; // Default true if offline
+    if (!_isFirebaseInitialized) return true;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return false;
     await user.reload();
@@ -107,22 +120,23 @@ class FirebaseService {
     await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
   }
 
+  static Future<void> confirmPasswordReset({
+    required String code,
+    required String newPassword,
+  }) async {
+    if (!_isFirebaseInitialized) return;
+    await FirebaseAuth.instance.confirmPasswordReset(
+      code: code,
+      newPassword: newPassword,
+    );
+  }
+
   static Future<void> signOut() async {
     if (!_isFirebaseInitialized) return;
     try {
       await GoogleSignIn().signOut();
     } catch (_) {}
     await FirebaseAuth.instance.signOut();
-  }
-
-  static String? get currentUserId {
-    if (!_isFirebaseInitialized) return null;
-    return FirebaseAuth.instance.currentUser?.uid;
-  }
-
-  static User? get currentUser {
-    if (!_isFirebaseInitialized) return null;
-    return FirebaseAuth.instance.currentUser;
   }
 
   // --- Firestore Collections ---

@@ -13,6 +13,8 @@ import 'services/firebase_service.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FirebaseService.init();
@@ -39,6 +41,7 @@ class MoneyTrackApp extends StatelessWidget {
           return Consumer<ThemeProvider>(
             builder: (context, themeProvider, _) {
               return MaterialApp(
+                navigatorKey: rootNavigatorKey,
                 title: 'MoneyTrack',
                 debugShowCheckedModeBanner: false,
                 theme: AppTheme.lightTheme(),
@@ -47,9 +50,36 @@ class MoneyTrackApp extends StatelessWidget {
                 home: Consumer<AuthProvider>(
                   builder: (context, authProvider, _) {
                     if (authProvider.isLoading) {
-                      return const Scaffold(
+                      return Scaffold(
                         body: Center(
-                          child: CircularProgressIndicator(color: AppColors.primary),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20.r),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary.withOpacity(0.25),
+                                      blurRadius: 16.r,
+                                      offset: Offset(0, 6.h),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20.r),
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    width: 72.w,
+                                    height: 72.h,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 20.h),
+                              const CircularProgressIndicator(color: AppColors.primary),
+                            ],
+                          ),
                         ),
                       );
                     }
@@ -58,12 +88,10 @@ class MoneyTrackApp extends StatelessWidget {
                       return const WelcomeScreen();
                     }
 
-                    // Check real Firebase email verification status
-                    final currentUser = FirebaseService.currentUser;
+                    // If user is logged in via email/password but not verified
                     if (FirebaseService.isInitialized &&
-                        currentUser != null &&
-                        !currentUser.emailVerified &&
-                        currentUser.providerData.any((p) => p.providerId == 'password')) {
+                        !authProvider.isEmailVerified &&
+                        authProvider.isPasswordProvider) {
                       return const EmailVerificationScreen();
                     }
 

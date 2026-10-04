@@ -209,7 +209,7 @@ class NavigationSidebar extends StatelessWidget {
                     ),
                     IconButton(
                       icon: const Icon(Icons.logout_rounded, size: 20, color: AppColors.expense),
-                      tooltip: 'Log out',
+                      tooltip: 'Sign Out',
                       onPressed: () => authProvider.logout(),
                     ),
                   ],
